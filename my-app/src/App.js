@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
+
+
 function App() {
     const [tone, setTone] = useState('Casual');
     const [length, setLength] = useState('Short');
@@ -9,22 +11,36 @@ function App() {
     const [output, setOutput] = useState('');
 
     const handleGenerate = async () => {
-        const response = await axios.post('/api/generate', {
-            tone,
-            length,
-            features,
-            brandPositioning
-        });
-        setOutput(response.data.output);
-    };
+      try {
+          const response = await axios.post('http://localhost:8000/generate', {
+              tone,
+              length,
+              features,
+              brandPositioning
+          });
+          console.log(response.data.output);
 
-    const handleInsert = async () => {
-        await axios.post('/api/insert', {
-            output
-        });
-        alert('Inserted into DB');
-    };
-
+          setOutput(response.data.output);
+      } catch (error) {
+          console.error('Error generating text:', error);
+      }
+  };
+  
+  const handleInsert = async () => {
+      try {
+          await axios.post('http://localhost:8000/insert', {
+              tone,
+              length,
+              features,
+              brandPositioning,
+              output
+          });
+          alert('Inserted into DB');
+      } catch (error) {
+          console.error('Error inserting data:', error);
+      }
+  };
+  
     return (
         <div className="App">
             <h1>Reference Front End</h1>
@@ -67,11 +83,11 @@ function App() {
                 </select>
             </div>
             <button onClick={handleGenerate}>Generate</button>
-            <button onClick={handleInsert}>Insert in DB</button>
             <div>
                 <h2>Output</h2>
                 <textarea value={output} readOnly />
             </div>
+            <button onClick={handleInsert}>Insert in DB</button>
         </div>
     );
 }
