@@ -75,5 +75,48 @@ app.post('/insert', async (req, res) => {
     }
 });
 
+app.post('/regenerate', async (req, res) => {
+    const { highlightedText, fullText, option } = req.body;
+
+    const promptTemplate = `
+    You are a copywriter at a marketing agency working on a brochure for a real estate developer.
+    Modify the highlighted text within the full text as per the selected option.
+
+    <FULL TEXT>
+    ${fullText}
+    </FULL TEXT> 
+
+    <HIGHLIGHTED TEXT>
+    ${highlightedText}
+    </HIGHLIGHTED TEXT>
+
+    The selected option is to ${option === 'shorter' ? 'shorten' : 'lengthen'} the highlighted text.
+    `;
+
+    try {
+        const response = await axios.post(
+            'https://api.edenai.run/v2/text/generation',
+            {
+                providers: ["openai/gpt-3.5-turbo-instruct"],
+                text: promptTemplate,
+                length: option === 'shorter' ? '1-2 sentences' : '3-5 sentences',
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${process.env.EDEN_AI_API_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        const modifiedText = response.data[0].generated_text;
+        res.json({ modifiedText });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error regenerating text');
+    }
+});
+
+
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
